@@ -1,0 +1,84 @@
+body {
+    background-color: rgb(72,72,94);
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    color: #CCC;
+}
+
+h1 {
+    font-size: 2rem;
+}
+
+button {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    padding: 5px;
+    padding-left: 25px;
+    padding-right: 25px;
+    font-size: 1.5rem;
+}
+
+input {
+    margin-top: 0.5rem;
+    font-size: 1.5rem;
+    display: block;
+}
+
+.flashes {
+    list-style-type: none;
+}
+
+#all-guesses {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.hidden {
+    display: none;
+}
+
+.word-list {
+    margin-top: 0.25rem;
+    list-style-type: none;
+    font-size: 1.25rem;
+    font-weight: normal;
+}
+
+.valid {
+    color: rgb(0, 180, 0);
+}
+
+.not-on-board {
+    color: orange;
+}
+
+.not-a-word {
+    color: #d30000;
+}
+
+.error {
+    margin-top: 0.5rem;
+    font-size: 1.5rem;
+    font-weight: normal;
+    color: #d30000;
+}
+
+.debug {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.2rem;
+}
+
+a {
+    color: rgb(156,220,254)
+}
+
+table {
+    table-layout: fixed;
+    width: 12rem;  
+  }
+
+td {
+    text-align: center;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 1.5rem;
+    font-weight: bold;
+}

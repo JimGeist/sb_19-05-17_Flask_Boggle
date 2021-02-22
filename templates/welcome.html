@@ -1,0 +1,49 @@
+{% extends '_base.html' %}
+
+{% block content %}
+
+<div id="contents">
+    <div id="board-and-form">
+        <h2 id="score">Score: 0</h2>
+        {{game_board|safe}}
+
+        <form action="">
+            <input type="text" name="guess" id="guess" placeholder="guess a word" required pattern="[A-Za-z]{2,}"
+                title="2 or more alphabetical letters only, no spaces"><br>
+            <button id="submit-guess">{{button_text}}</button>
+        </form>
+    </div>
+    <div class="hidden" id="all-guesses">
+        <hr>
+        <div class="valid hidden" id="list-valid">
+            Valid Words:<ul class="word-list valid">
+                <li id="words-valid"></li>
+            </ul>
+        </div>
+        <div class="not-on-board hidden" id="list-not-on-board">
+            Not on the game board:<ul class="word-list not-on-board">
+                <li id="words-not-on-board"></li>
+            </ul>
+        </div>
+        <div class="not-a-word hidden hidden" id="list-not-a-word">
+            Not a word:<ul class="word-list not-a-word">
+                <li id="words-not-a-word"></li>
+            </ul>
+        </div>
+        <hr>
+    </div>
+    <div class="error" id="messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <ul class="flashes">
+            {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
+
+    </div>
+</div>
+
+{% endblock %}
