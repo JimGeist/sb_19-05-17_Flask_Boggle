@@ -4,12 +4,14 @@
 
 <div id="contents">
     <div id="board-and-form">
+        <div><span id="time"></span> </div>
         <h2 id="score">Score: 0</h2>
+
         {{game_board|safe}}
 
         <form action="">
-            <input type="text" name="guess" id="guess" placeholder="guess a word" required pattern="[A-Za-z]{2,}"
-                title="2 or more alphabetical letters only, no spaces"><br>
+            <input type="text" name="guess" id="guess" placeholder="guess a word" autofocus required
+                pattern="[A-Za-z]{3,}" title="3 or more alphabetical letters only, no spaces"><br>
             <button id="submit-guess">{{button_text}}</button>
         </form>
     </div>

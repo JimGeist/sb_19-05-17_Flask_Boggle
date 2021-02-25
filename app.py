@@ -21,23 +21,29 @@ app.config['SECRET_KEY'] = "the password is 'P A S S W O R D'"
 # “None” or an invalid value, without the “secure” attribute. To know more about the
 # “SameSite“ attribute,
 # read https://developer.mozilla.org/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+# chrome did not like when SESSION_COOKIE_SECURE was set to True.
+# app.config.update(
+#     SESSION_COOKIE_SECURE=True,
+#     SESSION_COOKIE_HTTPONLY=True,
+#     SESSION_COOKIE_SAMESITE='Lax'
+# )
 app.config.update(
-    SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SAMESITE='Lax'
 )
+
 
 # Establish the session name for the game. session[GAME_SESSION] holds the game board,
 #  words, and score.
 GAME_SESSION = "boggle_session"
 
 # game_session_data = {
-#     GAME_SESSION_BOARD_RAW: [<< raw board list returned from make_board() >>],
-#     GAME_SESSION_BOARD_HTML: "<< html table version of the raw board >>"
+#     GAME_SESSION_BOARD_RAW: [<< raw board list returned from make_board() >>]
 # }
-# Where GAME_SESSION_BOARD_RAW = "game_board_raw" and GAME_SESSION_BOARD_HTML = "game_board_html"
+# Where GAME_SESSION_BOARD_RAW = "game_board_raw"
 GAME_SESSION_BOARD_RAW = "game_board_raw"
-GAME_SESSION_BOARD_HTML = "game_board_html"
+
+GAME_BOARD_HTML = "game_board_html"
 
 
 def create_game_board():
@@ -49,7 +55,7 @@ def create_game_board():
     """
     game_board_out = {
         GAME_SESSION_BOARD_RAW: boggle_game.make_board(),
-        GAME_SESSION_BOARD_HTML: ""
+        GAME_BOARD_HTML: ""
     }
     if(len(game_board_out["game_board_raw"]) > 0):
         delim = "</td><td>"
@@ -57,8 +63,8 @@ def create_game_board():
         for row in game_board_out[GAME_SESSION_BOARD_RAW]:
             board = board + f"    <tr><td>{(delim).join(row)}</td></tr>\n"
         # we have the rows and data with the proper element tags.
-        board = f'  <table id="boggle-board">\n{board}\n  </table>'
-        game_board_out[GAME_SESSION_BOARD_HTML] = board
+        board = f'  <table class="tbl-game" id="boggle-board">\n{board}\n  </table>'
+        game_board_out[GAME_BOARD_HTML] = board
 
     return game_board_out
 
@@ -76,8 +82,8 @@ def game_welcome():
 
     game_board = create_game_board()
 
-    # save the game_board (raw and html versions) to session storage
-    session[GAME_SESSION] = game_board
+    # save the game_board (raw version) to session storage
+    session[GAME_SESSION] = game_board[GAME_SESSION_BOARD_RAW]
 
     return render_template("welcome.html", game_board=game_board["game_board_html"],
                            button_text="Guess",
@@ -101,10 +107,18 @@ def check_word():
     word_guess = request.args.get("word", "")
     word_guess_valid = {}
 
+    import pdb
+    pdb.set_trace()
+
     game_board = session[GAME_SESSION]
 
+    # word_guess_valid["result"] = boggle_game.check_valid_word(
+    #     game_board[GAME_SESSION_BOARD_RAW], word_guess)
     word_guess_valid["result"] = boggle_game.check_valid_word(
-        game_board[GAME_SESSION_BOARD_RAW], word_guess)
+        game_board, word_guess)
+
+    # word_guess_valid["word"] = word_guess
+    # word_guess_valid["board"] = game_board[GAME_SESSION_BOARD_RAW]
 
     # print(f"\n\ncheck_word(): guessed word = {word_guess}", flush=True)
     # print(
@@ -115,3 +129,18 @@ def check_word():
     #     f"check_word(): jsonify(word_guess_valid) = {jsonify(word_guess_valid)}\n\n", flush=True)
 
     return jsonify({"result": word_guess_valid})
+
+
+@ app.route("/api/game_over", methods=["PUT"])
+def handle_game_over():
+    """ takes the score and creates a cookie for storage in the browser. At least I am thinking
+        in the browser because we have not looked at server storage. The request should be json.
+
+    """
+
+    score = request.args.get("score", "")
+
+    import pdb
+    pdb.set_trace()
+
+    word_guess_valid = {}
