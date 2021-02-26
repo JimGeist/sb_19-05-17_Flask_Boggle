@@ -96,6 +96,17 @@ input {
     margin-top: 0.5rem;
     font-size: 2.0rem;
     color: orange;
+    
+}
+
+.high-score {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: rgb(0, 96, 0);
+    background-color: rgb(128,128,128);
+    border-radius: 10px;
 }
 
 .debug {

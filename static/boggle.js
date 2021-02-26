@@ -1,6 +1,8 @@
-const API_ROOT = "http://127.0.0.1:5000/api/"
+const ROOT_GAME = "http://127.0.0.1:5000"
+const ROOT_API = `${ROOT_GAME}/api/`
 
 let score = 0;
+
 const wordsPlayed = new Set();
 
 const checkResults = {
@@ -23,15 +25,26 @@ const checkResults = {
 
 async function gameOver() {
 
-    postMessage("< < <  GAME   OVER  > > >", "game-over");
+    // postMessage("< < <  GAME   OVER  > > >", "game-over");
     // $("#messages").removeClass("error").addClass("game-over").text("< < <  GAME   OVER  > > >");
     //$("#messages").text("< < <  GAME   OVER  > > >");
 
     $("#submit-guess").prop("disabled", true);
 
-    window.location = `${API_ROOT}game_over?score=${score}`
+    // save the score is session storage
+    // remember words that were played.
+    const wordsValid = $("#words-valid").text();
+    const wordsNotOnBoard = $("#words-not-on-board").text();
+    const wordsNotWords = $("#words-not-a-word").text();
+    await saveGame(score, wordsValid, wordsNotOnBoard, wordsNotWords);
 
-    // await setScore(score);
+    // game over sends the final game screen. Sending the screen also sends cookies with the 
+    //  high score and number of plays. This game's score was sent to the server already via
+    //  setScore.
+
+
+
+    window.location = `${ROOT_GAME}/game_over`
 
     // score = score;
 
@@ -86,36 +99,33 @@ function startTimer(duration, display) {
 }
 
 
-async function setScore(inScore) {
+async function saveGame(inScore, wordsValid, wordsNotOnBoard, wordsNotWords) {
+
+
 
     /** function synopsis:
-     *   makes a ??post request?? to save the score??
+     *   makes a put request to save the score in session storage. No data is expected back
+     *   
      */
 
-    results_out = {
-        "statusIsOK": null,
-        "result": null,
-        "message": null
-    }
+    // const res = await axios.put(`${ROOT_API}set_score`, {
+    //     params: {
+    //         "score": inScore,
+    //         "wordsValid": JSON.stringify(wordsValid),
+    //         "wordsNotOnBoard": JSON.stringify(wordsNotOnBoard),
+    //         "wordsNotWords": JSON.stringify(wordsNotWords)
+    //     }
+    // });
 
-    try {
-        //const res = await axios.put(`${API_ROOT}game_over?score=${score}`);
-        const res = await axios.get(`${API_ROOT}game_over?score=${score}`);
 
-        if (res.status === 200) {
-            results_out["statusIsOK"] = true;
-            results_out["result"] = res.data.result["result"];
-        } else {
-            results_out["statusIsOK"] = false;
-            results_out["message"] = `Status was not 200 (OK). response code = ${res.status}. Word to check: '${guess}'`;
+    const res = await axios.put(`${ROOT_API}save_game`, {
+        params: {
+            "score": inScore,
+            "words_valid": wordsValid,
+            "words_not_on_board": wordsNotOnBoard,
+            "words_not_a_word": wordsNotWords
         }
-
-    } catch (e) {
-        results_out["statusIsOK"] = false;
-        results_out["message"] = `An unexpected error (${e.message}) occurred while connecting to game server. Word to check: '${guess}'`;
-    }
-
-    return results_out;
+    });
 
 }
 
@@ -128,7 +138,7 @@ async function checkWord(guess) {
      *   Server will reply with a JSON response which contains either a 
      *   dictionary of {“result”: “ok”}, {“result”: “not-on-board”}, or {“result”: “not-word”}.
      *   
-     *   API_ROOT = http://127.0.0.1/api/
+     *   ROOT_API = http://127.0.0.1/api/
      *    check word route: check_word?word=:guessed_word
      * 
      *   {
@@ -145,7 +155,7 @@ async function checkWord(guess) {
     }
 
     try {
-        const res = await axios.get(`${API_ROOT}check_word?word=${guess}`);
+        const res = await axios.get(`${ROOT_API}check_word?word=${guess}`);
 
         if (res.status === 200) {
             results_out["statusIsOK"] = true;
@@ -228,14 +238,13 @@ async function handleGuess(event) {
         wordCheck = await checkWord(guess);
 
         if (wordCheck.statusIsOK) {
-            console.log(`handleGuess: statusIsOK: ${wordCheck.statusIsOK}, result: ${wordCheck.result}.`)
 
             $("#all-guesses").removeClass("hidden");
 
-            let sfx = checkResults[wordCheck.result]["idSuffix"]
+            let idSuffix = checkResults[wordCheck.result]["idSuffix"]
 
-            $(`#list-${sfx}`).removeClass("hidden");
-            $(`#words-${sfx}`).text(`${$(`#words-${sfx}`).text()}${checkResults[wordCheck.result]["comma"]}${guess}`);
+            $(`#list-${idSuffix}`).removeClass("hidden");
+            $(`#words-${idSuffix}`).text(`${$(`#words-${idSuffix}`).text()}${checkResults[wordCheck.result]["comma"]}${guess}`);
 
             score = score + (guess.length * checkResults[wordCheck.result]["scoreAdjustor"]);
             $("#score").text(`Score: ${score}`);
@@ -254,18 +263,58 @@ async function handleGuess(event) {
 
 }
 
+function wordListVisibility() {
+
+    // Determines which word lists have values should not be hidden.
+    for (obj_key of Object.keys(checkResults)) {
+        // checkResults list aided in the loading of the word lists during
+        //  game play. It has the keys for the three list types and the 
+        //  object contains the pieces to access each html page element.
+        let idSuffix = checkResults[obj_key]["idSuffix"]
+        if ($(`#words-${idSuffix}`).text().length > 0) {
+            $(`#list-${idSuffix}`).removeClass("hidden");
+
+            // Make the all-guesses div visible.
+            $("#all-guesses").removeClass("hidden");
+        }
+    }
+
+}
+
+async function newGame() {
+
+    window.location = ROOT_GAME;
+
+}
+
+
 // waits for the DOM to load
 $(function () {
 
     // Start the timer only when there is a button with id "submit-guess" on the page
     if ($("#submit-guess").length === 1) {
-        let duration = 60 * 0.25;
+        let duration = 60 * 0.5;
 
         const display = document.querySelector('#time');
         startTimer(duration, display);
-    }
 
-    // listener for click of the submit guess button
-    $("#submit-guess").on("click", handleGuess);
+        // listener for click of the submit guess button
+        $("#submit-guess").on("click", handleGuess);
+
+    } else {
+
+        if ($("#new-game").length === 1) {
+            // We have the 'game over' page displayed. 
+            // The page has the word list added, but the lists are hidden. We need
+            //  to make the proper lists visible. The guess input box needs to get
+            //  disabled as well. Finally, we need to add game over!
+            wordListVisibility();
+            postMessage("< < <  GAME   OVER  > > >", "game-over");
+
+            // listener for click of the submit guess button
+            $("#new-game").on("click", newGame);
+        }
+
+    }
 
 });
