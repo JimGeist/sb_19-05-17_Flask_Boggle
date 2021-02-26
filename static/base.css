@@ -29,6 +29,30 @@ input {
     /*font-family: 'Orbitron', sans-serif;*/
 }
 
+#score {
+    margin-top: 0.50rem;
+    margin-bottom: 0.25rem;
+}
+
+.score-td {
+    text-align: left;
+    vertical-align: top;
+    width: 12rem;
+}
+
+.time-td {
+    padding-top: 0.6rem;
+    text-align: right;
+    vertical-align: top;
+    width: 7rem;
+}
+
+.score-hist {
+    font-size: 1.00rem;
+    font-weight: normal;
+    display: block;
+}
+
 .flashes {
     list-style-type: none;
 }
@@ -84,6 +108,7 @@ a {
 }
 
 .tbl-game {
+    margin-top: 1.00rem;
     table-layout: fixed;
     width: 12rem;  
   }

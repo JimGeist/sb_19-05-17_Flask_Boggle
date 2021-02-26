@@ -29,9 +29,11 @@ async function gameOver() {
 
     $("#submit-guess").prop("disabled", true);
 
-    await setScore(score);
+    window.location = `${API_ROOT}game_over?score=${score}`
 
-    score = score;
+    // await setScore(score);
+
+    // score = score;
 
 }
 
@@ -71,23 +73,16 @@ function startTimer(duration, display) {
         display.textContent = minutes + ":" + seconds;
 
         if (diff <= 0) {
-            // add one second so that the count down starts at the full duration
-            // example 05:00 not 04:59
-            start = Date.now() + 1000;
-            throughOnce = true;
-        } else {
-            if (throughOnce) {
-                display.textContent = "00:00";
-                clearInterval(intervalHandle);
-                gameOver();
-            }
+            clearInterval(intervalHandle);
+            display.textContent = "00:00";
+            gameOver();
         }
 
     };
     // we don't want to wait a full second before the timer starts
     timer();
     let intervalHandle = setInterval(timer, 1000);
-    // timeRemaining = false;
+
 }
 
 
@@ -104,7 +99,8 @@ async function setScore(inScore) {
     }
 
     try {
-        const res = await axios.put(`${API_ROOT}game_over?score=${score}`);
+        //const res = await axios.put(`${API_ROOT}game_over?score=${score}`);
+        const res = await axios.get(`${API_ROOT}game_over?score=${score}`);
 
         if (res.status === 200) {
             results_out["statusIsOK"] = true;
@@ -261,10 +257,13 @@ async function handleGuess(event) {
 // waits for the DOM to load
 $(function () {
 
-    let duration = 60 * 0.25;
+    // Start the timer only when there is a button with id "submit-guess" on the page
+    if ($("#submit-guess").length === 1) {
+        let duration = 60 * 0.25;
 
-    const display = document.querySelector('#time');
-    startTimer(duration, display);
+        const display = document.querySelector('#time');
+        startTimer(duration, display);
+    }
 
     // listener for click of the submit guess button
     $("#submit-guess").on("click", handleGuess);
