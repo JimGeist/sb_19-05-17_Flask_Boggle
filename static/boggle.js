@@ -311,6 +311,9 @@ $(function () {
             wordListVisibility();
             postMessage("< < <  GAME   OVER  > > >", "game-over");
 
+            // // Disable the input
+            // $("#guess").prop("disabled", true);
+
             // listener for click of the submit guess button
             $("#new-game").on("click", newGame);
         }

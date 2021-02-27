@@ -39,39 +39,41 @@ GAME_SESSION = "boggle_session"
 # session[GAME_OVER_INFO] holds the score and word lists for the game that just ended.
 GAME_OVER_INFO = "boggle_gameover"
 
-# game_session_data = {
-#     GAME_SESSION_BOARD_RAW: [<< raw board list returned from make_board() >>]
-# }
-# Where GAME_SESSION_BOARD_RAW = "game_board_raw"
-GAME_SESSION_BOARD_RAW = "game_board_raw"
 
-
-# Cookie Constants
+# Cookie Name Constants -- these are the visible names of the cookies in browser storage
 COOKIE_NBR_PLAYS = "boggle_plays"
 COOKIE_HIGH_SCORE = "boggle_high"
-COOKIE_DELIM = "<!>"
-# COOKIE_NBR_PLAYS = "nbr_plays"
-# COOKIE_HIGH_SCORE = "high_score"
 COOKIE_EXPIRY = 5184000  # 5,184,000 seconds (60 days) = cookie expiration date
+
+# Dictionary Key Name Constants - constants created for frequently used keys
+G_CK = "cookie_data"
+G_CK_PLAYS = "nbr_of_plays"
+G_CK_SCORE_HIGH = "score_high"
+G_CK_HIGH_IS_NEW = "score_high_is_new"
+
+G_GO = "game_over_data"
+G_GO_SCORE = "score"
+G_GO_WDS_VALID = "words_valid"
+G_GO_WDS_NOT_ON_BOARD = "words_not_on_board"
+G_GO_WDS_NOT_WORD = "words_not_a_word"
 
 
 def get_cookie_data():
     """ function reads the cookies COOKIE_NBR_PLAYS and COOKIE_HIGH_SCORE and returns 
         the following object with the data from the cookies:
         {
-            COOKIE_NBR_PLAYS: <int, nbr plays from cookie COOKIE_NBR_PLAYS>,
-            COOKIE_HIGH_SCORE: <int, high score from cookie COOKIE_HIGH_SCORE>
+            G_CK_PLAYS: <int, nbr plays from cookie COOKIE_NBR_PLAYS>,
+            G_CK_SCORE_HIGH: <int, high score from cookie COOKIE_HIGH_SCORE>
         }
-        where COOKIE_NBR_PLAYS = "boggle_plays" and COOKIE_HIGH_SCORE = "boggle_high"
+        where G_CK_PLAYS = "nbr_of_plays" and G_CK_SCORE_HIGH = "score_high"
     """
 
     cookie_data = {}
     plays = request.cookies.get(COOKIE_NBR_PLAYS, "0")
     high = request.cookies.get(COOKIE_HIGH_SCORE, "0")
 
-    cookie_data[COOKIE_NBR_PLAYS] = int(
-        plays) if (plays.isnumeric()) else 0
-    cookie_data[COOKIE_HIGH_SCORE] = int(high) if (high.isnumeric()) else 0
+    cookie_data[G_CK_PLAYS] = int(plays) if (plays.isnumeric()) else 0
+    cookie_data[G_CK_SCORE_HIGH] = int(high) if (high.isnumeric()) else 0
 
     return cookie_data
 
@@ -86,23 +88,23 @@ def update_cookie_data(score_last_game):
 
         update_cookie data returns the following dictionary:
         {
-            COOKIE_NBR_PLAYS: <int, updated nbr plays from cookie COOKIE_NBR_PLAYS>,
-            COOKIE_HIGH_SCORE: <int, updated high score from cookie COOKIE_HIGH_SCORE>
-            "new_high_score": <True / False>
+            G_CK_PLAYS: <int, updated nbr plays from cookie COOKIE_NBR_PLAYS>,
+            G_CK_SCORE_HIGH: <int, updated high score from cookie COOKIE_HIGH_SCORE>
+            G_CK_HIGH_IS_NEW: <True / False>
         }
 
     """
     cookie_data = get_cookie_data()
 
-    cookie_data[COOKIE_NBR_PLAYS] = cookie_data[COOKIE_NBR_PLAYS] + 1
+    cookie_data[G_CK_PLAYS] = cookie_data[G_CK_PLAYS] + 1
 
     # check for and update high score as necessary
-    if (score_last_game > cookie_data[COOKIE_HIGH_SCORE]):
+    if (score_last_game > cookie_data[G_CK_SCORE_HIGH]):
         # We have a new high score
-        cookie_data["new_high_score"] = True
-        cookie_data[COOKIE_HIGH_SCORE] = score_last_game
+        cookie_data[G_CK_HIGH_IS_NEW] = True
+        cookie_data[G_CK_SCORE_HIGH] = score_last_game
     else:
-        cookie_data["new_high_score"] = False
+        cookie_data[G_CK_HIGH_IS_NEW] = False
 
     return cookie_data
 
@@ -126,15 +128,90 @@ def create_game_board_html(game_board_raw):
         return ""
 
 
-def get_game_board_raw():
-    """ function calls the boggle_game.make_board for the random letters to use in the game
-        board. The raw board is saved in the session since it is needed whenever a word 
-        guess requires validation. 
+def assemble_game_data(for_game_end):
+    """ function assembles the data needed for the game board in one dictionary. The 
+        dictionary may be composed of sub-dictionairies, but the goal is to have it 
+        all in one place.
 
-        A separate function converts the random letters to an html table.
-
+        for_game_end, True / False, is True when the data is for the end of the 
+        game because values from the game_over_info session are required and cookie
+        logic is an update when end of game.
     """
-    return boggle_game.make_board()
+
+    # create an empty game dictionary called game. board, cookie_data, and button_attr
+    #  sub dictionaries are created in the game dictionary since they are needed for
+    #  game start and game end pages.
+    game = {
+        "board": {},
+        G_CK: {},
+        "button_attr": {}
+    }
+
+    if (for_game_end):
+        # get the raw game board from the session, convert the raw game board to html
+        #  and save both values in the board sub-dictionary.
+        board_raw = session[GAME_SESSION]
+        game["board"] = {
+            "raw": board_raw,
+            "html": create_game_board_html(board_raw)
+        }
+
+        game_over_data = session[GAME_OVER_INFO]
+        game[G_GO] = game_over_data["params"]
+
+        # note that cookie values are integers, not string. They are converted to integer
+        #  in get_cookie_data
+        game[G_CK] = update_cookie_data(game[G_GO][G_GO_SCORE])
+        # cookie_scores has the following dictionary:
+        #   {
+        #     COOKIE_NBR_PLAYS: <updated nbr plays>,
+        #     COOKIE_HIGH_SCORE: <high score>
+        #     "new_high_score": <True / False>
+        #   }
+
+        if (game[G_CK][G_CK_HIGH_IS_NEW]):
+            # add a message for flash messages to the dictionary. Note that since this is the
+            #  first occurrence of a flash message, the flash list and sub-dictionaries are
+            #  also created at this point.
+            game["flash"] = []
+            game["flash"].append({
+                "msg_text": "&#x1F601; CONGRATULATIONS -- A new high score &#x1F601;",
+                "msg_class": "high-score"
+            })
+
+        game["button_attr"] = {
+            "id": "new-game",
+            "text": "Start New Game"
+        }
+    else:
+        # get the raw game board from the session, convert the raw game board to html
+        #  and save both values in the board sub-dictionary.
+        board_raw = boggle_game.make_board()
+        game["board"] = {
+            "raw": board_raw,
+            "html": create_game_board_html(board_raw)
+        }
+        # save the game_board (raw version) to session storage
+        session[GAME_SESSION] = board_raw
+
+        # create an empty structure. This structure is accessed when populating the
+        #  lists of words. The key values are not needed because get() is used in
+        #  the template.
+        game[G_GO] = {}
+
+        game[G_CK] = get_cookie_data()
+        # cookie_scores has the following dictionary:
+        #   {
+        #     COOKIE_NBR_PLAYS: <updated nbr plays>,
+        #     COOKIE_HIGH_SCORE: <high score>
+        #   }
+
+        game["button_attr"] = {
+            "id": "submit-guess",
+            "text": "Guess"
+        }
+
+    return game
 
 
 @ app.route("/")
@@ -148,35 +225,13 @@ def game_welcome():
     show_debug_info = request.args.get("debug", False)
     show_debug_info = True if (show_debug_info == "") else False
 
-    game_board_raw = get_game_board_raw()
-    game_board_html = create_game_board_html(game_board_raw)
+    game = assemble_game_data(False)
 
-    # save the game_board (raw version) to session storage
-    session[GAME_SESSION] = game_board_raw
-
-    cookie_scores = get_cookie_data()
-    button_attr = {
-        "id": "submit-guess",
-        "text": "Guess"
-    }
-
-    # game.html is used to deliver the game board at the start of the game
-    #  and it is used again when the game is over.
-    # At the start of the game, but button id is "submit-guess" and the
-    #  words played is an empty dictionary. The dictionary structure is
-    #  used instead of passing in 3 arguments to the template.
-    # When game.html is used when the game is over, the words_played will
-    #  have values.
-    words_played = {
-        "words_valid": "",
-        "words_not_on_board": "",
-        "words_not_a_word": ""
-    }
-
-    html = render_template("game.html", game_board=game_board_html,
-                           button_attr=button_attr,
-                           scoring=cookie_scores,
-                           words_played=words_played,
+    html = render_template("game.html", game_board=game["board"]["html"],
+                           button_attr=game["button_attr"],
+                           scoring=game[G_CK],
+                           score=0,
+                           words_played=game[G_GO],
                            debug=show_debug_info,
                            session_name=GAME_SESSION,
                            cookie="")
@@ -191,9 +246,9 @@ def game_welcome():
     #   httponly (bool) = {False},
     #   samesite (Optional [str]) {"Lax"})
     resp_obj.set_cookie(
-        COOKIE_HIGH_SCORE, str(cookie_scores[COOKIE_HIGH_SCORE]), COOKIE_EXPIRY, None, "/", None, False, False, "Lax")
+        COOKIE_HIGH_SCORE, str(game[G_CK][G_CK_SCORE_HIGH]), COOKIE_EXPIRY, None, "/", None, False, False, "Lax")
     resp_obj.set_cookie(
-        COOKIE_NBR_PLAYS, str(cookie_scores[COOKIE_NBR_PLAYS]), COOKIE_EXPIRY, None, "/", None, False, False, "Lax")
+        COOKIE_NBR_PLAYS, str(game[G_CK][G_CK_PLAYS]), COOKIE_EXPIRY, None, "/", None, False, False, "Lax")
     return resp_obj
 
 
@@ -212,13 +267,8 @@ def check_word():
     word_guess = request.args.get("word", "")
     word_guess_valid = {}
 
-    # import pdb
-    # pdb.set_trace()
-
     game_board = session[GAME_SESSION]
 
-    # word_guess_valid["result"] = boggle_game.check_valid_word(
-    #     game_board[GAME_SESSION_BOARD_RAW], word_guess)
     word_guess_valid["result"] = boggle_game.check_valid_word(
         game_board, word_guess)
 
@@ -239,29 +289,24 @@ def handle_save_game():
 
     """
 
-    score = request.args.get("score", "")
-
     game_values = request.get_json()
     # game_values should have dictionary that resembles
     # {params:
     #    {
     #       "score": score from the game that just ended,
-    #       "wordsValid": the list of valid words,
-    #       "wordsNotOnBoard": the list of words that were not on
+    #       "words_valid": the list of valid words,
+    #       "words_not_on_board": the list of words that were not on
     #                           the game board,
-    #       "wordsNotWords": list of words that were not words
+    #       "words_not_a_word": list of words that are not words
     #    }
-    # The game_values dictionary is saved to the session and it recalled
-    #  when the game_over page is rendered.
-
-    print(f"\n\nsave_game: game_values: {game_values}", flush=True)
+    # The game_values dictionary is saved to the session and it recalled when
+    #  the game_over page is rendered. The dictionary key names should align
+    #  to the id's of list elements in page.html using a _ instead of a -.
 
     session[GAME_OVER_INFO] = game_values
 
+    # make_response() can get called without arguments
     resp = make_response()
-
-    # import pdb
-    # pdb.set_trace()
 
     return resp
 
@@ -277,40 +322,24 @@ def handle_game_over():
 
     """
 
+    # assemble information needed for the game over. The goal is to have one
+    #  dictionary with the data needed returned to handle_game_over instead of
+    #  having a bunch of mini-dictionaries with keys that are really getting
+    #  hard to keep track of and remember.
+    # create_game_object
     # get the game board from the last game and convert it to html
-    game_board = session[GAME_SESSION]
-    game_board_html = create_game_board_html(game_board)
+    game = assemble_game_data(True)
+    if (game[G_CK][G_CK_HIGH_IS_NEW]):
+        for msg_data in game["flash"]:
+            flash(msg_data["msg_text"], msg_data["msg_class"])
 
-    game_data = session[GAME_OVER_INFO]
-    cookie_scores = update_cookie_data(game_data["params"]["score"])
-    # cookie_scores has the following dictionary:
-    #   {
-    #     COOKIE_NBR_PLAYS: <updated nbr plays>,
-    #     COOKIE_HIGH_SCORE: <high score>
-    #     "new_high_score": <True / False>
-    #   }
-    if (cookie_scores["new_high_score"]):
-        flash("CONGRATULATIONS -- A new high score &#x1F601;!", "high-score")
-
-    words_played = game_data["params"]
-
-    button_attr = {
-        "id": "new-game",
-        "text": "Start New Game"
-    }
-
-    # import pdb
-    # pdb.set_trace()
-
-    print(f"\ngame_over: game_data: {game_data}", flush=True)
-    print(f"game_over: words_played: {words_played}", flush=True)
-
-    html = render_template("game.html", game_board=game_board_html,
-                           button_attr=button_attr,
-                           scoring=cookie_scores,
-                           words_played=words_played,
+    html = render_template("game.html", game_board=game["board"]["html"],
+                           button_attr=game["button_attr"],
+                           score=game[G_GO][G_GO_SCORE],
+                           scoring=game[G_CK],
+                           words_played=game[G_GO],
                            debug=False,
-                           session_name=GAME_SESSION,
+                           session_name="",
                            cookie="")
 
     resp_obj = make_response(html)
@@ -323,10 +352,11 @@ def handle_game_over():
     #   httponly (bool) = {False},
     #   samesite (Optional [str]) {"Lax"})
     resp_obj.set_cookie(
-        COOKIE_HIGH_SCORE, str(cookie_scores[COOKIE_HIGH_SCORE]), COOKIE_EXPIRY, None, "/", None, False, False, "Lax")
-    resp_obj.set_cookie(
-        COOKIE_NBR_PLAYS, str(cookie_scores[COOKIE_NBR_PLAYS]), COOKIE_EXPIRY, None, "/", None, False, False, "Lax")
+        COOKIE_NBR_PLAYS, str(game[G_CK][G_CK_PLAYS]), COOKIE_EXPIRY, None, "/", None, False, False, "Lax")
 
-    # import pdb
-    # pdb.set_trace()
+    if (game[G_CK][G_CK_HIGH_IS_NEW]):
+        # we have a new high score. Set a cookie with the update high score.
+        resp_obj.set_cookie(
+            COOKIE_HIGH_SCORE, str(game[G_CK][G_CK_SCORE_HIGH]), COOKIE_EXPIRY, None, "/", None, False, False, "Lax")
+
     return resp_obj
