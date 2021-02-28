@@ -1,61 +1,58 @@
 {% extends '_base.html' %}
-
 {% block content %}
+	<div id="contents">
+		<div id="board-and-form">
+			<table>
+				<tr>
+					<td class="score-td">
+						<h3 id="score">Score: {{score}}</h3>
+						<span class="score-hist" id="high-score">High Score: {{scoring.get('score_high', 0)}}</span>
+						<span class="score-hist" id="nbr-plays">Number of Plays: {{scoring.get('nbr_of_plays', 0)}}</span>
+					</td>
+					<td class="time-td" id="time"></td>
+				</tr>
+			</table>
 
-<div id="contents">
-    <div id="board-and-form">
-        <table>
-            <tr>
-                <td class="score-td">
-                    <h3 id="score">Score: {{score}}</h3>
-                    <span class="score-hist" id="high-score">High Score: {{scoring.get('score_high', 0)}}</span>
-                    <span class="score-hist" id="nbr-plays">Number of Plays: {{scoring.get('nbr_of_plays', 0)}}</span>
-                </td>
-                <td class="time-td" id="time"></td>
-            </tr>
-        </table>
+			{{game_board|safe}}
 
-        {{game_board|safe}}
+			<form action="">
+				<input type="text" name="guess" id="guess" placeholder="guess a word" autofocus required
+					pattern="[A-Za-z]{3,}" title="3 or more alphabetical letters only, no spaces"><br>
+				<button id="{{button_attr['id']}}">{{button_attr['text']}}</button>
+			</form>
+		</div>
+		
+		<div class="hidden" id="all-guesses">
+			<hr>
+			<div class="valid hidden" id="list-valid">
+				Valid Words:<ul class="word-list valid">
+					<li id="words-valid">{{words_played.get("words_valid", "")}}</li>
+				</ul>
+			</div>
+			<div class="not-on-board hidden" id="list-not-on-board">
+				Not on the game board:<ul class="word-list not-on-board">
+					<li id="words-not-on-board">{{words_played.get("words_not_on_board", "")}}</li>
+				</ul>
+			</div>
+			<div class="not-a-word hidden hidden" id="list-not-a-word">
+				Not a word:<ul class="word-list not-a-word">
+					<li id="words-not-a-word">{{words_played.get("words_not_a_word", "")}}</li>
+				</ul>
+			</div>
+			<hr>
+		</div>
+		
+		<div class="error" id="messages">
 
-        <form action="">
-            <input type="text" name="guess" id="guess" placeholder="guess a word" autofocus required
-                pattern="[A-Za-z]{3,}" title="3 or more alphabetical letters only, no spaces"><br>
-            <button id="{{button_attr['id']}}">{{button_attr['text']}}</button>
-        </form>
-    </div>
-    <div class="hidden" id="all-guesses">
-        <hr>
-        <div class="valid hidden" id="list-valid">
-            Valid Words:<ul class="word-list valid">
-                <li id="words-valid">{{words_played.get("words_valid", "")}}</li>
-            </ul>
-        </div>
-        <div class="not-on-board hidden" id="list-not-on-board">
-            Not on the game board:<ul class="word-list not-on-board">
-                <li id="words-not-on-board">{{words_played.get("words_not_on_board", "")}}</li>
-            </ul>
-        </div>
-        <div class="not-a-word hidden hidden" id="list-not-a-word">
-            Not a word:<ul class="word-list not-a-word">
-                <li id="words-not-a-word">{{words_played.get("words_not_a_word", "")}}</li>
-            </ul>
-        </div>
-        <hr>
-    </div>
-    <div class="error" id="messages">
-
-    </div>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <ul class="flashes">
-        {% for category, message in messages %}
-        <li><span class="{{ category }}">{{ message|safe }}</span></li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-    {% endwith %}
-
-</div>
-
+		</div>
+		{% with messages = get_flashed_messages(with_categories=true) %}
+		{% if messages %}
+		<ul class="flashes">
+			{% for category, message in messages %}
+			<li><span class="{{ category }}">{{ message|safe }}</span></li>
+			{% endfor %}
+		</ul>
+		{% endif %}
+		{% endwith %}
+	</div>
 {% endblock %}

@@ -137,9 +137,9 @@ def create_game_board_html(game_board_raw):
         delim = "</td><td>"
         board = ""
         for row in game_board_raw:
-            board = board + f"    <tr><td>{(delim).join(row)}</td></tr>\n"
+            board = board + f"    		  <tr><td>{(delim).join(row)}</td></tr>\n"
         # we have the rows and data with the proper element tags.
-        board = f'  <table class="tbl-game" id="boggle-board">\n{board}\n  </table>'
+        board = f'<table class="tbl-game" id="boggle-board">\n{board}\n		    </table>'
         return board
     else:
         return ""
