@@ -1,5 +1,9 @@
-const ROOT_GAME = "http://127.0.0.1:5000"
-const ROOT_API = `${ROOT_GAME}/api/`
+// PITA Boggle 
+
+const ROOT_GAME = "http://127.0.0.1:5000";
+const ROOT_API = `${ROOT_GAME}/api/`;
+
+const NBR_OF_MINUTES = 1;
 
 let score = 0;
 
@@ -25,10 +29,6 @@ const checkResults = {
 
 async function gameOver() {
 
-    // postMessage("< < <  GAME   OVER  > > >", "game-over");
-    // $("#messages").removeClass("error").addClass("game-over").text("< < <  GAME   OVER  > > >");
-    //$("#messages").text("< < <  GAME   OVER  > > >");
-
     $("#submit-guess").prop("disabled", true);
 
     // save the score is session storage
@@ -36,17 +36,16 @@ async function gameOver() {
     const wordsValid = $("#words-valid").text();
     const wordsNotOnBoard = $("#words-not-on-board").text();
     const wordsNotWords = $("#words-not-a-word").text();
+
+    // saveGame makes an api call to save the score, words in the wordsValid,
+    //  wordsNotOnBoard, and wordsNotWords lists to session storage. 
+    // The values, if not saved, are lost when window.location is changed to 
+    //  root/game_over. With the values in session storage, the server can
+    //  rebuild some elements JavaScript can make the determination as to 
+    //  list element visibility.
     await saveGame(score, wordsValid, wordsNotOnBoard, wordsNotWords);
 
-    // game over sends the final game screen. Sending the screen also sends cookies with the 
-    //  high score and number of plays. This game's score was sent to the server already via
-    //  setScore.
-
-
-
     window.location = `${ROOT_GAME}/game_over`
-
-    // score = score;
 
 }
 
@@ -100,8 +99,6 @@ function startTimer(duration, display) {
 
 
 async function saveGame(inScore, wordsValid, wordsNotOnBoard, wordsNotWords) {
-
-
 
     /** function synopsis:
      *   makes a put request to save the score in session storage. No data is expected back
@@ -223,8 +220,9 @@ function guessIsValid(guess) {
 async function handleGuess(event) {
 
     // The player made a guess and clicked the guess button. 
-    // Get the word they entered, send it to the server for processing.
-
+    // Get the word they entered, check it for proper characters and whether
+    //  it was already used. When validations pass, send the word to the 
+    //  server for further validation.
 
     event.preventDefault();
 
@@ -252,7 +250,6 @@ async function handleGuess(event) {
 
         } else {
             // an error occurred. display the message.
-            //$("#messages").text(wordCheck.message);
             postMessage(wordCheck.message, "error")
         }
 
@@ -282,7 +279,9 @@ function wordListVisibility() {
 }
 
 async function newGame() {
-
+    // The game-over route is currently displayed and the Start New Game
+    //  button was clicked. Start the new game by calling the boggle 
+    //  game root.
     window.location = ROOT_GAME;
 
 }
@@ -293,7 +292,7 @@ $(function () {
 
     // Start the timer only when there is a button with id "submit-guess" on the page
     if ($("#submit-guess").length === 1) {
-        let duration = 60 * 0.5;
+        let duration = 60 * NBR_OF_MINUTES;
 
         const display = document.querySelector('#time');
         startTimer(duration, display);
@@ -311,8 +310,8 @@ $(function () {
             wordListVisibility();
             postMessage("< < <  GAME   OVER  > > >", "game-over");
 
-            // // Disable the input
-            // $("#guess").prop("disabled", true);
+            // Disable the input
+            $("#guess").prop("disabled", true);
 
             // listener for click of the submit guess button
             $("#new-game").on("click", newGame);
